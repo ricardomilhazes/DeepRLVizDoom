@@ -38,7 +38,7 @@ load_model = False
 skip_learning = False
 
 # Configuration file path
-DEFAULT_MODEL_SAVEFILE = "/tmp/model"
+DEFAULT_MODEL_SAVEFILE = "./tmp/model"
 DEFAULT_CONFIG = "../../scenarios/simpler_basic.cfg"
 
 
