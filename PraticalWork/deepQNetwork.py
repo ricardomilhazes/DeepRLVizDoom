@@ -12,6 +12,9 @@ import tensorflow as tf
 from tqdm import trange
 import vizdoom as vzd
 from argparse import ArgumentParser
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers.convolutional import Conv2D, MaxPooling2D
 
 # Q-learning settings
 learning_rate = 0.00025
@@ -85,7 +88,25 @@ class ReplayMemory:
         return self.s1[i], self.a[i], self.s2[i], self.isterminal[i], self.r[i]
 
 
-def create_network(session, available_actions_count):
+def create_network_keras(available_actions_count):
+    model = Sequential()
+    model.add(Conv2D(8, (6, 6), input_shape=(30, 45, 1), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(3, 3)))
+    model.add(Dropout(0.2))
+    model.add(Conv2D(8, (3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.2))
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(available_actions_count, activation='softmax'))
+
+    model.compile(loss=tf.keras.losses.MeanSquaredError(),
+                  optimizer=tf.keras.optimizers.RMSprop(learning_rate), metrics=['accuracy'])
+
+    return model
+
+
+def create_network_tensorflow(session, available_actions_count):
     # Create the input variables
     s1_ = tf.placeholder(
         tf.float32, [None] + list(resolution) + [1], name="State")
@@ -230,7 +251,7 @@ if __name__ == '__main__':
     memory = ReplayMemory(capacity=replay_memory_size)
 
     session = tf.Session()
-    learn, get_q_values, get_best_action = create_network(
+    learn, get_q_values, get_best_action = create_network_tensorflow(
         session, len(actions))
     saver = tf.train.Saver()
     if load_model:
