@@ -22,7 +22,7 @@ import pprint
 batch_size = 64
 
 # Training regime
-test_episodes_per_epoch = 100
+test_episodes_per_epoch = 10
 
 # Other parameters
 frame_repeat = 12
@@ -56,7 +56,7 @@ class Environment:
 
     # Creates and initializes ViZDoom environment.
     def initialize_vizdoom(self, config_file_path):
-        print("Initializing doom...")
+        #print("Initializing doom...")
         game = vzd.DoomGame()
         game.load_config(config_file_path)
         game.set_window_visible(False)
@@ -64,7 +64,7 @@ class Environment:
         game.set_screen_format(vzd.ScreenFormat.GRAY8)
         game.set_screen_resolution(vzd.ScreenResolution.RES_640X480)
         game.init()
-        print("Doom initialized.")
+        #print("Doom initialized.")
         return game
 
     def getGame(self):
@@ -150,7 +150,13 @@ class Agent:
         return function_learn, function_get_q_values, function_simple_get_best_action
 
     def play(self, verbose=1):
+        mean_scores = []
+        max_scores = []
+        min_scores = []
+        episodes_per_epoch = []
+        episodes_played = []
         score = 0
+
         time_start = time()
         for epoch in range(epochs):
             print("\nEpoch %d\n-------" % (epoch + 1))
@@ -170,10 +176,13 @@ class Agent:
                     self.game.new_episode()
                     train_episodes_finished += 1
 
+            train_scores = np.array(train_scores)
+
+            #Get metrics
+            episodes_per_epoch.append(train_episodes_finished)
+
             if(verbose):
                 print("%d training episodes played." % train_episodes_finished)
-
-            train_scores = np.array(train_scores)
 
             if(verbose):
                 print("Results: mean: %.1f±%.1f," % (train_scores.mean(), train_scores.std()), "min: %.1f," % train_scores.min(), "max: %.1f," % train_scores.max())
@@ -194,7 +203,13 @@ class Agent:
                 test_scores.append(r)
 
             test_scores = np.array(test_scores)
+            
+            # Get metrics
             score = test_scores.mean()
+            mean_scores.append(score)
+            max_scores.append(test_scores.max())
+            min_scores.append(test_scores.min())
+
             if(verbose):
                 print("Results: mean: %.1f±%.1f," % (
                 test_scores.mean(), test_scores.std()), "min: %.1f" % test_scores.min(),
@@ -211,7 +226,7 @@ class Agent:
         if(verbose):
             print("======================================")
 
-        return score    
+        return score, mean_scores, max_scores, min_scores, episodes_per_epoch
 
 
     def learn_from_memory(self):
@@ -304,14 +319,19 @@ class ReplayMemory:
 
 # global variables
 # Q-learning settings
-learning_rate = 0.0000000001
-discount_factor = 0.5
-feature_maps = 8
-activation_func = tf.nn.softmax
-epochs = 7
-learning_steps_per_epoch = 1500
+learning_rate = 0.01
+discount_factor = 1
+feature_maps = 16
+activation_func = 3
+epochs = 1
+learning_steps_per_epoch = 200
 replay_memory_size = 10000
 
 if __name__ == "__main__":
     agent = Agent(learning_rate, discount_factor, feature_maps, activation_func)
-    score = agent.play(verbose=1)
+    score, mean_scores, max_scores, min_scores, episodes_per_epoch = agent.play(verbose=1)
+    print(mean_scores)
+    print(max_scores)
+    print(min_scores)
+    print(episodes_per_epoch)
+

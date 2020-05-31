@@ -3,43 +3,90 @@ import math
 import matplotlib.pyplot as plt
 import deepQNetwork as dqn
 
-possible_learning_rate = [0.1, 0.01, 0.001, 0.0001]
-bounds = [(0,1),(0,3)] # 1st variable -> discount_factor, 2nd variable -> activation_function
-possible_number_of_fm = [4,8,12,16]
+possible_lr = [0.1, 0.01, 0.001, 0.0001]
+possible_fm = [4,8,12,16]
+possible_atv_func = [0, 1, 2, 3]
+# df pode ser qql valore entre [0, 1]
+
 nv = 4
 
 initial_fitness = -1000 # maximization problem
 
-particle_size = 5 # how many particles do we want?
-iteration = 5 # how many iterations do we want?
+particle_size = 3 # how many particles do we want?
+iteration = 1 # how many iterations do we want?
 w = 0.729 # used to determine inertia
 c1 = 2.05 # weight given to individual solutions
 c2 = 2.05 # weight given to colective solutions
 
+
+def convertPositionToValue(positionValue, possibleValues):
+    if(positionValue < 0.25):
+        return possibleValues[0]
+    elif positionValue < 0.5:
+        return possibleValues[1]
+    elif positionValue < 0.75:
+        return possibleValues[2]
+    else:
+       return possibleValues[3]
+
+def convertBestSolution(best_particle_position):
+    lr = convertPositionToValue(best_particle_position[0], possible_lr)
+    df = best_particle_position[1]
+    fm = convertPositionToValue(best_particle_position[2], possible_fm)
+    af = convertPositionToValue(best_particle_position[3], possible_atv_func)
+
+    best_solution = []
+    best_solution.append(lr)
+    best_solution.append(df)
+    best_solution.append(fm)
+    best_solution.append(af)
+
+    return best_solution
+
+
 class Particle:
-    def __init__(self,bounds):
+    def __init__(self, id):
+        self.id = id
+        self.iteration = 0
         self.particle_position = []
         self.particle_velocity = []
         self.local_best_particle_position = []
         self.fitness_local_best_particle_position = initial_fitness
         self.fitness_particle_position = initial_fitness
 
-        self.particle_position.append(random.choice(possible_learning_rate)) # learning_rate
-        self.particle_velocity.append(random.choice([0.1,10]))
+        for i in range(nv):
+            # generate random initial position
+            self.particle_position.append(random.uniform(0, 1))
+            # generate random initial velocity
+            self.particle_velocity.append(random.uniform(-1, 1))
 
-        self.particle_position.append(random.uniform(bounds[0][0],bounds[0][1])) # discount_factor
-        self.particle_velocity.append(random.uniform(-1,1))
+        #self.particle_position.append(random.choice(possible_learning_rate)) # learning_rate
+        #self.particle_velocity.append(random.choice([0.1,10]))
 
-        self.particle_position.append(random.randint(bounds[1][0],bounds[1][1])) # activation_func
-        self.particle_velocity.append(random.randint(-1,1))
+        #self.particle_position.append(random.uniform(bounds[0][0],bounds[0][1])) # discount_factor
+        #self.particle_velocity.append(random.uniform(-1,1))
+
+        #self.particle_position.append(random.randint(bounds[1][0],bounds[1][1])) # activation_func
+        #self.particle_velocity.append(random.randint(-1,1))
         
-        self.particle_position.append(random.choice(possible_number_of_fm)) # feature_maps
-        self.particle_velocity.append(random.choice([-4,4]))
+        #self.particle_position.append(random.choice(possible_number_of_fm)) # feature_maps
+        #self.particle_velocity.append(random.choice([-4,4]))
 
     def evaluate(self):
-        print(self.particle_position[2])
-        agent = dqn.Agent(self.particle_position[0], self.particle_position[1], self.particle_position[3], self.particle_position[2])
-        self.fitness_particle_position = agent.play(verbose=1)
+        lr = convertPositionToValue(self.particle_position[0], possible_lr)
+        df = self.particle_position[1]
+        fm = convertPositionToValue(self.particle_position[2], possible_fm)
+        af = convertPositionToValue(self.particle_position[3], possible_atv_func)
+
+        self.iteration += 1
+
+        print("############################################")
+        print("Particle " + str(self.id) + ", iteration " + str(self.iteration) + " (lr: " + str(lr) + ", df: " + str(df) + ", fm: " + str(fm) + ", af: " + str(af)+ ")")
+        agent = dqn.Agent(lr, df, fm, af)
+        score, _, _, _, _ = agent.play(verbose=0)
+        self.fitness_particle_position = score
+        print("Particle " + str(self.id) + ", iteration " + str(self.iteration) + ", score " + str(self.fitness_particle_position))
+        print("############################################")
 
         if self.fitness_particle_position > self.fitness_local_best_particle_position:
             self.local_best_particle_position = self.particle_position
@@ -54,66 +101,26 @@ class Particle:
             social_velocity = c2*r2*(global_best_particle_position[i] - self.particle_position[i])
             self.particle_velocity[i] = w*self.particle_velocity[i] + cognitive_velocity + social_velocity
 
-    def update_position(self,bounds):
-        self.particle_position[0] = self.particle_position[0] * self.particle_velocity[0]
-
-        i = 1
+    def update_position(self):
         for i in range(nv):
             self.particle_position[i] = self.particle_position[i] + self.particle_velocity[i]
 
-        if(self.particle_position[0] > 0.1):
-            self.particle_position[0] = 0.1
-        if(self.particle_position[0] >= 0.055 and self.particle_position[0] <= 0.1):
-            self.particle_position[0] = 0.1
-        if(self.particle_position[0] >= 0.0055 and self.particle_position[0] < 0.55):
-            self.particle_position[0] = 0.01
-        if(self.particle_position[0] >= 0.00055 and self.particle_position[0] < 0.0055):
-            self.particle_position[0] = 0.001
-        if(self.particle_position[0] >= 0.0001 and self.particle_position[0] < 0.00055):
-            self.particle_position[0] = 0.0001
-        if(self.particle_position[0] < 0.0001):
-            self.particle_position[0] = 0.0001
-
-        if(self.particle_position[1] > bounds[0][1]):
-            self.particle_position[1] = bounds[0][1]
-        if(self.particle_position[1] < bounds[0][0]):
-            self.particle_position[1] = bounds[0][0]
-
-        if(self.particle_position[2] > bounds[1][1]):
-            self.particle_position[2] = bounds[1][1]
-        if(self.particle_position[2] >= 2.5 and self.particle_position[2] <= 3.0):
-            self.particle_position[2] = 3
-        if(self.particle_position[2] >= 1.5 and self.particle_position[2] < 2.5):
-            self.particle_position[2] = 2
-        if(self.particle_position[2] >= 0.5 and self.particle_position[2] < 1.5):
-            self.particle_position[2] = 1
-        if(self.particle_position[2] >= 0 and self.particle_position[2] < 0.5):
-            self.particle_position[2] = 0
-        if(self.particle_position[2] < bounds[1][0]):
-            self.particle_position[2] = bounds[1][0]
-        
-        if(self.particle_position[3] > 16):
-            self.particle_position[3] = 16
-        if(self.particle_position[3] >= 14 and self.particle_position[3] <= 16):
-            self.particle_position[3] = 16
-        if(self.particle_position[3] >= 10 and self.particle_position[3] < 14):
-            self.particle_position[3] = 12
-        if(self.particle_position[3] >= 6 and self.particle_position[3] < 10):
-            self.particle_position[3] = 8
-        if(self.particle_position[3] >= 4 and self.particle_position[3] < 6):
-            self.particle_position[3] = 4
-        if(self.particle_position[3] < 4):
-            self.particle_position[3] = 4
+            # check and repair to satisfy the upper bounds
+            if self.particle_position[i] > 1:
+                self.particle_position[i] = 1
+            # check and repair to satisfy the lower bounds
+            if self.particle_position[i] < 0:
+                self.particle_position[i] = 0
     
 class PSO():
-    def __init__(self,bounds,particle_size,iteration):
+    def __init__(self,particle_size, iteration):
 
         fitness_global_best_particle_position = initial_fitness
         global_best_particle_position = []
 
         swarm_particle = []
         for i in range(particle_size):
-            swarm_particle.append(Particle(bounds))
+            swarm_particle.append(Particle(i+1))
         A = []
 
         for i in range(iteration):
@@ -126,13 +133,13 @@ class PSO():
 
             for j in range(particle_size):
                 swarm_particle[j].update_velocity(global_best_particle_position)
-                swarm_particle[j].update_position(bounds)
+                swarm_particle[j].update_position()
             
             A.append(fitness_global_best_particle_position)
     
-        print('Optimal Solution: ', global_best_particle_position)
+        print('Optimal Solution: ', convertBestSolution(global_best_particle_position))
         print('Objective Function Value: ', fitness_global_best_particle_position)
         plt.plot(A)
         plt.show()
 
-PSO(bounds,particle_size,iteration)
+PSO(particle_size,iteration)
