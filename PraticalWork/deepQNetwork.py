@@ -45,6 +45,17 @@ def preprocess(img):
     img = img.astype(np.float32)
     return img
 
+def plot_result(results, title, x_label, y_label):
+    import matplotlib.pyplot as plt
+
+    plt.plot(np.arange(1,len(results)+1), results, 'b')
+
+    plt.xticks(np.arange(1,len(results)+1))
+
+    plt.title(title)
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
+    plt.show()
 
 class Environment:
 
@@ -219,7 +230,7 @@ class Agent:
             if(verbose):
                 print("Total elapsed time: %.2f minutes" % ((time() - time_start) / 60.0))
 
-            print("Score: " + str(score) + " -> lr: " + str(self.learning_rate) + " | fm: " + str(self.feature_maps) + " | af: " + str(self.activation_func) + " | df:" + str(self.discount_factor))    
+            print("Score: " + str(score) + " -> lr: " + str(self.learning_rate) + " | df:" + str(self.discount_factor) + " | fm: " + str(self.feature_maps) + " | af: " + str(self.activation_func))    
 
         self.game.close()
 
@@ -323,7 +334,7 @@ learning_rate = 0.01
 discount_factor = 1
 feature_maps = 16
 activation_func = 3
-epochs = 1
+epochs = 3
 learning_steps_per_epoch = 200
 replay_memory_size = 10000
 
@@ -331,7 +342,8 @@ if __name__ == "__main__":
     agent = Agent(learning_rate, discount_factor, feature_maps, activation_func)
     score, mean_scores, max_scores, min_scores, episodes_per_epoch = agent.play(verbose=1)
     print(mean_scores)
-    print(max_scores)
-    print(min_scores)
     print(episodes_per_epoch)
+    plot_result(mean_scores, 'Mean Scores per Epoch', 'Epoch', 'Mean Score')
+    plot_result(episodes_per_epoch, 'Episodes Played per Epoch', 'Epoch', 'Episodes Played')
+
 

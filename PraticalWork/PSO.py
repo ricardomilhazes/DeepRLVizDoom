@@ -13,7 +13,7 @@ nv = 4
 initial_fitness = -1000 # maximization problem
 
 particle_size = 3 # how many particles do we want?
-iteration = 1 # how many iterations do we want?
+iteration = 2 # how many iterations do we want?
 w = 0.729 # used to determine inertia
 c1 = 2.05 # weight given to individual solutions
 c2 = 2.05 # weight given to colective solutions
