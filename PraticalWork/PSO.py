@@ -1,11 +1,12 @@
 import random
 import math
 import matplotlib.pyplot as plt
+import deepQNetwork as dqn
 
 bounds=[(0,1),(0,1)] # 1st variable -> learning rate, 2nd variable -> discount_factor
 nv = 2
 
-initial_fitness = 0 # maximization problem
+initial_fitness = -1000 # maximization problem
 
 particle_size = 10 # how many particles do we want?
 iteration = 10 # how many iterations do we want?
@@ -26,8 +27,9 @@ class Particle:
             self.particle_velocity.append(random.uniform(-1,1))
 
     def evaluate(self):
-        # Find a way to determine average cnn score
         # self.fitness_particle_position = average_score
+        agent = dqn.Agent(self.particle_position[0], self.particle_position[1])
+        self.fitness_particle_position = agent.play(verbose=1)
 
         if self.fitness_particle_position > self.fitness_local_best_particle_position:
             self.local_best_particle_position = self.particle_position
