@@ -18,7 +18,6 @@ from keras.layers.convolutional import Conv2D, MaxPooling2D
 import numpy as np
 import pprint
 
-
 # NN learning settings
 batch_size = 64
 
@@ -86,7 +85,11 @@ class Agent:
         self.discount_factor = df
         self.learning_rate = lr
         self.feature_maps = fm
-        self.activation_func = af
+
+        if(af == 0): self.activation_func = tf.nn.relu
+        if(af == 1): self.activation_func = tf.nn.swish
+        if(af == 2): self.activation_func = tf.nn.selu
+        if(af == 3): self.activation_func = tf.math.sigmoid
 
         self.session = tf.Session()
 
@@ -201,7 +204,7 @@ class Agent:
             if(verbose):
                 print("Total elapsed time: %.2f minutes" % ((time() - time_start) / 60.0))
 
-            #print("Score: " + score + " -> lr: " + str(self.learning_rate) + " | fm: " + str(self.feature_maps) + " | af: " + str(self.activation_func) + " | df:" + str(self.discount_factor))    
+            print("Score: " + str(score) + " -> lr: " + str(self.learning_rate) + " | fm: " + str(self.feature_maps) + " | af: " + str(self.activation_func) + " | df:" + str(self.discount_factor))    
 
         self.game.close()
 
@@ -305,8 +308,8 @@ learning_rate = 0.0000000001
 discount_factor = 0.5
 feature_maps = 8
 activation_func = tf.nn.softmax
-epochs = 5
-learning_steps_per_epoch = 1000
+epochs = 7
+learning_steps_per_epoch = 1500
 replay_memory_size = 10000
 
 if __name__ == "__main__":
